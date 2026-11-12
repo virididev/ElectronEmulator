@@ -1,0 +1,8 @@
+{
+  "name": "acorn-electron",
+  "version": "1.0.0",
+  "description": "Develop BBC BASIC and 6502 machine code programs for the Acorn Electron, with the acornelectron emulator installed on this computer as headless run, test, debug, profile and release environment. Works on macOS, Linux and Windows.",
+  "author": { "name": "Sander Groen" },
+  "repository": "https://github.com/virididev/ElectronEmulator",
+  "keywords": ["acorn", "electron", "6502", "bbc-basic", "emulator", "retro"]
+}

@@ -347,6 +347,22 @@ that was already there is not overwritten; the new one is then called
 `NAME 2.uef`. Saving again under the same name within one session does replace
 your own earlier version.
 
+## With Claude Code
+
+The folder `plugins/acorn-electron` is a plugin for Claude Code with skills
+that let it write programs for the Electron and use this emulator, as it is
+installed on the computer, to run them without a window, test, debug and
+profile them, and put them on a tape. In Claude Code:
+
+    /plugin install acorn-electron --marketplace virididev/ElectronEmulator
+
+The skills look for the emulator where it is usually installed
+(`/Applications/Acorn Electron.app` on a Mac, `%ProgramFiles%\acornelectron` or
+`%LOCALAPPDATA%\Programs\acornelectron` on Windows, `~/.local/bin`,
+`/usr/local/bin` or `/opt/acornelectron` on Linux) and on the PATH; if it is
+somewhere else, Claude asks where and remembers it. They need Python 3, and
+for programs in machine code the assembler of cc65.
+
 ## Structure
 
 | File                    | Hardware                                               |

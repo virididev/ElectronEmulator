@@ -1,0 +1,16 @@
+{
+  "name": "acorn-electron",
+  "owner": {
+    "name": "Sander Groen"
+  },
+  "metadata": {
+    "description": "Claude Code skills for writing software for the Acorn Electron with the acornelectron emulator."
+  },
+  "plugins": [
+    {
+      "name": "acorn-electron",
+      "source": "./plugins/acorn-electron",
+      "description": "Skills for developing Acorn Electron software with the acornelectron emulator: assemble, run headless, test, debug, profile and release as a tape."
+    }
+  ]
+}
