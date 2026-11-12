@@ -19,7 +19,7 @@ jobs:
         include:
           - os: windows-latest
             name: windows
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             name: linux
           - os: macos-latest
             name: macos
@@ -67,7 +67,7 @@ jobs:
           esac
           tar -C package -czf acornelectron-${{ matrix.name }}.tar.gz acornelectron
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: acornelectron-${{ matrix.name }}
           path: ${{ matrix.name == 'windows' && 'package/acornelectron' || format('acornelectron-{0}.tar.gz', matrix.name) }}
