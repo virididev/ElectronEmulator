@@ -5,9 +5,9 @@ description: Debug an Acorn Electron program in the emulator headless — breakp
 
 # Debugging with the monitor
 
-Read `electron-emulator` first. `EMU` = the helper `emu.py` from `electron-emulator`
-(`python3 <skills>/electron-emulator/scripts/emu.py`, `py -3 ...` on Windows; `<skills>` is
-the folder that holds this skill).
+Read `electron-emulator` first. `EMU` = the helper
+`<skills>/electron-emulator/scripts/emu.py` (`<skills>` is the folder that
+holds this skill); run it directly on macOS/Linux, with `py -3` on Windows.
 Work like a scientist: one hypothesis, one small script that confirms or
 refutes it, then the next. Don't change code before you know the cause.
 

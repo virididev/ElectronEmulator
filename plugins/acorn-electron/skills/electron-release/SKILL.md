@@ -5,9 +5,9 @@ description: Package an Acorn Electron program as a cassette tape image (.uef) t
 
 # Releasing as a tape
 
-Read `electron-emulator` first. `EMU` = the helper `emu.py` from `electron-emulator`
-(`python3 <skills>/electron-emulator/scripts/emu.py`, `py -3 ...` on Windows; `<skills>` is
-the folder that holds this skill).
+Read `electron-emulator` first. `EMU` = the helper
+`<skills>/electron-emulator/scripts/emu.py` (`<skills>` is the folder that
+holds this skill); run it directly on macOS/Linux, with `py -3` on Windows.
 Before this: the whole test suite passes (`electron-test`).
 
 The Electron itself writes the tape: what `SAVE`/`*SAVE` sends to the cassette
@@ -83,6 +83,11 @@ c 0E00 build-electron/prog.bin   # the code arrived intact
 f 100
 ```
 Look at `verify.png`. For BASIC, `f 1000` after loading and check the screen.
+
+If the program ends by returning to BASIC, verify that too: run on past the
+end and type a BASIC command (`t PRINT 1\n`, then look at the screen). After a
+tape `*RUN` a plain `RTS` is known to leave BASIC broken ("Bad program"), see
+the gotchas in `electron-emulator`.
 Run the regression tests against the tape as well if they don't depend on `l`.
 
 ## Hand-off

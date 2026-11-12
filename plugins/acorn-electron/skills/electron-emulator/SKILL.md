@@ -32,10 +32,15 @@ without having run it in the emulator.
 ## The helper script (cross-platform)
 
 `scripts/emu.py` in this skill's base directory (the directory this SKILL.md
-is in, e.g. `~/.claude/skills/electron-emulator/scripts/emu.py`) — standard
-library only. Call it with `python3` on macOS/Linux and `py -3` (or `python`)
-on Windows, by its full path, from the project you are working in. Below, `EMU`
-stands for that command.
+is in) — standard library only. Below, `EMU` stands for the call:
+- macOS/Linux: the script's full path itself (it is executable), e.g.
+  `"<base>/scripts/emu.py" check`. Put that one path in a variable if you
+  like (`EMU="<base>/scripts/emu.py"; "$EMU" check`) — but not
+  `"python3 <path>"`: zsh, the shell on macOS, does not split a variable into
+  words.
+- Windows: `py -3 "<base>\scripts\emu.py" check` (or `python`).
+
+Run it from the project you are working in, usually its root.
 
 ```
 EMU check                                 # emulator found? ROMs there? does it start?
@@ -46,6 +51,14 @@ EMU test [--png-dir DIR] tests/           # run every *.mon, PASS/FAIL, exit 1 o
 EMU bmp2png in.bmp out.png
 EMU uefcat out.uef a.uef b.uef            # join tapes (loader + code)
 ```
+
+**Labels in scripts.** Addresses change on every rebuild; a script with a
+line `#labels build-electron/prog.lbl` (an ld65 `-Ln` file, or lines
+`name = $0E02`; path relative to where the script runs) may write `@name` or
+`@name+3` (hex offset) wherever an address goes: `b @mainloop`, `m @score
+@score+1`, `c @score expect.bin`. `EMU run` and `EMU test` replace them before
+the emulator sees the script; an unknown label is a failure. Not inside `t`
+lines (there `@` is typed).
 
 `run` always adds `--headless`; `--png` asks the emulator for a screenshot and
 converts it to PNG so the Read tool can show it. Use the PNG to see what is on
@@ -154,6 +167,15 @@ with status 1 — so a script is a test.
 - **A breakpoint also stops `t` and `f`.** With `b X` set, `t CALL &E00\n`
   already stops at X; a `g` straight after it waits for the *next* hit and
   fails after 3000 frames. Look at the output to see where it stopped.
+- **Don't `RTS` back to BASIC after `*RUN` from tape.** Verified in this
+  emulator: after a tape `*RUN`, BASIC's zero page `&00–&0B` holds the file's
+  load/exec/length, and returning gives "Syntax error"/"Bad program" and
+  HIMEM = `&0E00` (possibly an emulator fault — tell the user if you hit it).
+  A program loaded from tape should not return, or should re-enter BASIC
+  cleanly (e.g. `*BASIC` via OSCLI). `CALL` from BASIC returns fine.
+- **`cycle` in the output is processor cycles**, which take different times
+  (RAM is slower than ROM, and modes 0–3 stall the CPU); a frame is not a
+  fixed number of them. For time use the profiler (µs) — see `electron-profile`.
 - **Printing with `OSWRCH` and only CR (13)** returns to column 0 and BASIC's
   next prompt overwrites the line; use `OSASCI` or `OSNEWL`.
 - **Tape takes machine time.** Loading a small tape ~250 frames; `SAVE` needs

@@ -5,9 +5,9 @@ description: Write and run automated regression tests for Acorn Electron program
 
 # Tests as monitor scripts
 
-Read `electron-emulator` first. `EMU` = the helper `emu.py` from `electron-emulator`
-(`python3 <skills>/electron-emulator/scripts/emu.py`, `py -3 ...` on Windows; `<skills>` is
-the folder that holds this skill).
+Read `electron-emulator` first. `EMU` = the helper
+`<skills>/electron-emulator/scripts/emu.py` (`<skills>` is the folder that
+holds this skill); run it directly on macOS/Linux, with `py -3` on Windows.
 
 A `.mon` script is a test: every failing check prints a line starting with `?`
 and the emulator exits with 1. What fails:
@@ -51,6 +51,18 @@ g
 c 0072 add_bcd.expect.bin   # expected: 42
 ```
 Avoid letting `RTS` run after `pc` — there is no caller on the stack.
+Better still, use labels so the test survives a rebuild (see
+`electron-emulator`):
+```
+#labels ../build-electron/prog.lbl
+f 100
+l @start ../build-electron/prog.bin
+w @in 19 23
+pc @add_bcd
+b @add_bcd_end
+g
+c @out add_bcd.expect.bin
+```
 
 **Whole program via BASIC.**
 ```
@@ -77,7 +89,8 @@ c 0070 sum.expect.bin
 
 **Screen contents.** Save screen memory once a known-good picture is reached
 (`sv 6000 7FFF screen.expect.bin` in mode 6, `3000 7FFF` in mode 0–2) and later
-compare with `c`. Do this only after you have looked at the PNG and confirmed
+compare with `c 6000 screen.expect.bin` — `c` takes only the start address,
+the file's length says how far. Do this only after you have looked at the PNG and confirmed
 it is right. Timing-dependent screens make brittle tests; stop at a breakpoint
 rather than after `f n` where possible.
 

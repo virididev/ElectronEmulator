@@ -33,9 +33,11 @@ cl65 -t none -g -C electron.cfg --start-addr 0x0E00 \
 (On Windows cmd put it on one line; `^` instead of `\` continues a line in cmd,
 `` ` `` in PowerShell.)
 
-- `--start-addr` = load and run address; `0x0E00` (PAGE) is the default choice.
-  Programs that run without BASIC may start lower (`&0E00` is safe with BASIC
-  as caller via `CALL`).
+- `--start-addr` = load and run address. `0x0E00` is PAGE, where a BASIC
+  program lives: fine for code that takes over the machine or is tested on its
+  own with `CALL &E00`, but it overwrites any BASIC program (including a
+  loader). To keep BASIC intact, load higher, e.g. `0x2000` (keep the end below
+  the screen: `&3000` in modes 0–2, `&5800` in 4–5, `&6000` in 6).
 - `-g -Ln prog.lbl` writes a label file (`al 000E02 .loop`): use it to put
   breakpoints on labels (`b 0E02`) and to read traces.
 - Keep build output out of the sources (e.g. `build-electron/`), and if the

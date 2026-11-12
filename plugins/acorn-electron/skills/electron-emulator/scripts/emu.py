@@ -25,6 +25,10 @@ Works on macOS, Linux and Windows with nothing but the Python standard library.
         and report which pass (exit 0) and which fail. A line in a script
         '#! <options>' adds emulator options, e.g. '#! --sideways-ram 16'.
 
+    Labels: a monitor script with a line '#labels <file>' (an ld65 -Ln file,
+    or lines 'name = $0E02') may write @name or @name+4 (hex) wherever an
+    address goes; they are replaced before the emulator sees the script.
+
     python emu.py bmp2png IN.bmp OUT.png
         convert a screenshot
 
@@ -39,6 +43,7 @@ install it (/Applications/Acorn Electron.app, %ProgramFiles%\\acornelectron,
 """
 
 import os
+import re
 import shutil
 import struct
 import subprocess
@@ -273,11 +278,10 @@ def run(args):
 
 
 def run_emulator(options, png=None, cwd=None, capture=False):
-    # Always say where files go: relative names in monitor scripts and what the
-    # machine saves to tape are taken relative to --saves, and without it the
-    # Mac application would use the Documents folder.
-    # Paths on the command line are made absolute, so that they mean the same
-    # whatever the emulator does with them.
+    # Always say where tapes go: without --saves the Mac application uses the
+    # Documents folder. Names inside a monitor script are relative to the
+    # working directory, which is cwd. Paths on the command line are made
+    # absolute, so that they mean the same whatever the emulator does with them.
     base = os.path.abspath(cwd or os.getcwd())
     absolute = []
     takes_path = {"--saves", "--roms", "--monitor", "--screenshot"}
@@ -289,6 +293,17 @@ def run_emulator(options, png=None, cwd=None, capture=False):
             a = os.path.join(base, a)  # a tape, snapshot, program or ROM file
         absolute.append(a)
     options = absolute
+    expanded = None
+    if "--monitor" in options:
+        i = options.index("--monitor") + 1
+        if i < len(options) and options[i] != "-":
+            try:
+                expanded = with_labels(options[i], base)
+            except ValueError as e:
+                print("? " + str(e))
+                return (1, "? " + str(e)) if capture else 1
+            if expanded:
+                options[i] = expanded
     if "--saves" not in options:
         options = ["--saves", base] + options
     cmd = [need_emulator(), "--headless"] + options
@@ -303,6 +318,8 @@ def run_emulator(options, png=None, cwd=None, capture=False):
         code, output = p.returncode, p.stdout
     else:
         code, output = subprocess.call(cmd, cwd=cwd), None
+    if expanded:
+        os.remove(expanded)
     if bmp:
         try:
             if os.path.getsize(bmp) > 0:
@@ -312,6 +329,57 @@ def run_emulator(options, png=None, cwd=None, capture=False):
         finally:
             os.remove(bmp)
     return (code, output) if capture else code
+
+
+LABEL_REF = re.compile(r"@([A-Za-z_][A-Za-z0-9_.]*)([+-][0-9A-Fa-f]+)?")
+
+
+def read_labels(path):
+    """Labels from an ld65 -Ln file ('al 000E02 .loop') or 'name = $0E02' lines."""
+    labels = {}
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            w = line.split()
+            if len(w) == 3 and w[0] == "al":
+                labels[w[2].lstrip(".")] = int(w[1], 16)
+                continue
+            m = re.match(r"\s*\.?([A-Za-z_][A-Za-z0-9_.]*)\s*=\s*[$&]([0-9A-Fa-f]+)\s*$", line)
+            if m:
+                labels[m.group(1)] = int(m.group(2), 16)
+    return labels
+
+
+def with_labels(script, base):
+    """A copy of the script with @name replaced by the label's address, when
+    the script has a line '#labels <file>'; None when it has none."""
+    with open(script, encoding="utf-8", errors="replace") as f:
+        lines = f.read().splitlines()
+    files = [l.split(None, 1)[1].strip() for l in lines if l.startswith("#labels ")]
+    if not files:
+        return None
+    labels = {}
+    for name in files:
+        path = os.path.join(base, name)
+        if not os.path.isfile(path):
+            raise ValueError("label file not found: " + path)
+        labels.update(read_labels(path))
+
+    def address(m):
+        name = m.group(1)
+        if name not in labels:
+            raise ValueError("unknown label @%s in %s" % (name, script))
+        return "%04X" % ((labels[name] + int(m.group(2) or "0", 16)) & 0xFFFF)
+
+    out = []
+    for line in lines:
+        # in t (typed text) an @ is a character to type, not a label
+        if not line.startswith("#") and not line.startswith("t "):
+            line = LABEL_REF.sub(address, line)
+        out.append(line)
+    fd, path = tempfile.mkstemp(suffix=".mon")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write("\n".join(out) + "\n")
+    return path
 
 
 def options_in(script):

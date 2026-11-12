@@ -5,9 +5,9 @@ description: Measure and optimise the speed of an Acorn Electron program in the 
 
 # Profiling
 
-Read `electron-emulator` first. `EMU` = the helper `emu.py` from `electron-emulator`
-(`python3 <skills>/electron-emulator/scripts/emu.py`, `py -3 ...` on Windows; `<skills>` is
-the folder that holds this skill).
+Read `electron-emulator` first. `EMU` = the helper
+`<skills>/electron-emulator/scripts/emu.py` (`<skills>` is the folder that
+holds this skill); run it directly on macOS/Linux, with `py -3` on Windows.
 Measure first, optimise second, measure again. Use the `6502` skill for the
 optimisation techniques themselves.
 
@@ -50,8 +50,19 @@ b 0E40         # toggle off
 b 0E5A
 g              # cycle difference = cost incl. memory contention
 ```
-The emulator times every bus access: RAM costs more than ROM and, in modes 0–3,
-RAM accesses wait for the video — so this count is what the real machine does.
+The count is in processor cycles, as the real machine does them: RAM costs
+more than ROM and, in modes 0–3, RAM accesses wait for the video. Cycles are
+therefore not a fixed time (a frame in mode 6 is about 36 000 of them, not
+40 000): compare cycle counts only between versions in the same mode, and use
+`pf`/`pr` for microseconds.
+
+## A loop that waits for the frame
+
+A main loop that waits for vertical sync (`OSBYTE 19`, `*FX19`) shows almost
+100% in `FFF4` and the OS — that is waiting, not work. Measure the work with
+`pr <start> <end>` over your own code's address range (from the `.lbl` file),
+or with cycles between a breakpoint after the wait and one before the next
+wait.
 
 ## Electron specifics
 

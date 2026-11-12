@@ -5,9 +5,9 @@ description: Run a program in the Acorn Electron emulator headless and see the r
 
 # Running a program and looking at it
 
-Read `electron-emulator` first. `EMU` = the helper `emu.py` from `electron-emulator`
-(`python3 <skills>/electron-emulator/scripts/emu.py`, `py -3 ...` on Windows; `<skills>` is
-the folder that holds this skill). Put scripts and outputs in a scratch or `build-electron/`
+Read `electron-emulator` first. `EMU` = the helper
+`<skills>/electron-emulator/scripts/emu.py` (`<skills>` is the folder that
+holds this skill); run it directly on macOS/Linux, with `py -3` on Windows. Put scripts and outputs in a scratch or `build-electron/`
 directory, not in the sources.
 
 After each run **look at the PNG with the Read tool** — that is how you see
