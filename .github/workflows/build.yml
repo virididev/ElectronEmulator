@@ -1,5 +1,8 @@
-# Builds the emulator on Windows, Linux and macOS, to see that it still does.
-# The ROMs are not in the repository, so the build makes do without them.
+# Builds the emulator on Windows, Linux and macOS, and keeps what is built as a
+# download with the run (under "Artifacts" on the page of the run).
+# The ROMs are not in the repository, so they are not in what is built either:
+# put os.rom and basic.rom in the folder 'roms' next to the program (on a Mac in
+# Acorn Electron.app/Contents/Resources/roms).
 
 name: build
 
@@ -13,11 +16,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            name: windows
+          - os: ubuntu-latest
+            name: linux
+          - os: macos-latest
+            name: macos
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Linux packages
         if: runner.os == 'Linux'
@@ -32,8 +41,33 @@ jobs:
         shell: bash
         run: mkdir -p roms
 
+      # SDL3 and zlib downloaded and built in everywhere, so that the program
+      # does not depend on what happens to be installed on the build machine
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DEMULATOR_DOWNLOAD_DEPENDENCIES=ON
 
       - name: Build
         run: cmake --build build --config Release --parallel
+
+      # a tar keeps the program executable on Linux and macOS, which the zip
+      # of an artifact does not
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p package/acornelectron/roms
+          case "${{ matrix.name }}" in
+            windows)
+              cp build/Release/acornelectron.exe build/Release/*.dll package/acornelectron/ 2>/dev/null || cp build/Release/acornelectron.exe package/acornelectron/
+              cp README.md package/acornelectron/ ;;
+            linux)
+              cp build/acornelectron README.md package/acornelectron/ ;;
+            macos)
+              rm -r package/acornelectron/roms
+              cp -R "build/Acorn Electron.app" README.md package/acornelectron/ ;;
+          esac
+          tar -C package -czf acornelectron-${{ matrix.name }}.tar.gz acornelectron
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: acornelectron-${{ matrix.name }}
+          path: ${{ matrix.name == 'windows' && 'package/acornelectron' || format('acornelectron-{0}.tar.gz', matrix.name) }}
