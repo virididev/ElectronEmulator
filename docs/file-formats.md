@@ -92,6 +92,7 @@ frame without border, at the size given by `--scale`.
 Lines of `name = value`, in the folder for preferences:
 
     FastTape = true
+    FastPaste = true
     AutoLoad = true
     FullScreen = false
     StatusBar = true

@@ -32,9 +32,9 @@ struct Options
 	bool Headless;
 
 	/* these overrule a setting; -1 if not given */
-	int Scale, Volume, FastTape, AutoLoad, FullScreen, SidewaysRAM;
+	int Scale, Volume, FastTape, FastPaste, AutoLoad, FullScreen, SidewaysRAM;
 
-	Options() : Frames(0), Headless(false), Scale(-1), Volume(-1), FastTape(-1), AutoLoad(-1), FullScreen(-1), SidewaysRAM(-1) {}
+	Options() : Frames(0), Headless(false), Scale(-1), Volume(-1), FastTape(-1), FastPaste(-1), AutoLoad(-1), FullScreen(-1), SidewaysRAM(-1) {}
 };
 
 void PrintUsage(const HostedMachine &Hosted)
@@ -55,6 +55,8 @@ void PrintUsage(const HostedMachine &Hosted)
 		"  --type <text>        type this once the machine has started; \\n is RETURN\n"
 		"  --no-autoload        do not load a tape given on the command line\n"
 		"  --no-fasttape        load tapes at their real speed\n"
+		"  --no-fastpaste       type pasted text and programs key by key, instead\n"
+		"                       of putting them straight in the keyboard buffer\n"
 		"  --sideways-ram <kB>  sideways RAM: 0, 16, 32, 48 or 64 kB\n"
 		"  --frames <n>         quit after this many frames\n"
 		"  --screenshot <file>  save the last picture as a BMP on quitting, at the\n"
@@ -107,6 +109,7 @@ bool ParseOptions(int argc, char *argv[], HostedMachine &Machine, Options &Resul
 		}
 		else if(Argument == "--headless") Result.Headless = true;
 		else if(Argument == "--no-fasttape") Result.FastTape = 0;
+		else if(Argument == "--no-fastpaste") Result.FastPaste = 0;
 		else if(Argument == "--no-autoload") Result.AutoLoad = 0;
 		else if(Argument == "--sideways-ram" && HasValue)
 		{
@@ -135,6 +138,7 @@ const struct MenuItem
 } MenuItems[] =
 {
 	{ "Fast tape loading",    &Settings::FastTape,   NULL, 0, 0, 0, "" },
+	{ "Fast pasting",         &Settings::FastPaste,  NULL, 0, 0, 0, "" },
 	{ "Load tapes at once",   &Settings::AutoLoad,   NULL, 0, 0, 0, "" },
 	{ "Full screen",          &Settings::FullScreen, NULL, 0, 0, 0, "" },
 	{ "Status bar",           &Settings::StatusBar,  NULL, 0, 0, 0, "" },
@@ -567,6 +571,7 @@ int RunEmulator(HostedMachine &Machine, int argc, char *argv[])
 	if(Opts.Scale >= 1) Current.Scale = Opts.Scale;
 	if(Opts.Volume >= 0) Current.Volume = Opts.Volume;
 	if(Opts.FastTape >= 0) Current.FastTape = Opts.FastTape != 0;
+	if(Opts.FastPaste >= 0) Current.FastPaste = Opts.FastPaste != 0;
 	if(Opts.AutoLoad >= 0) Current.AutoLoad = Opts.AutoLoad != 0;
 	if(Opts.FullScreen >= 0) Current.FullScreen = Opts.FullScreen != 0;
 	if(Opts.SidewaysRAM >= 0) Current.SidewaysRAM = Opts.SidewaysRAM;
@@ -644,7 +649,8 @@ int RunEmulator(HostedMachine &Machine, int argc, char *argv[])
 		Message = RestoreSnapshot(Machine, ResumeFile, "carried on where you left off");
 		MessageCountdown = MESSAGE_FRAMES;
 	}
-	if(!Opts.Text.empty()) Typist.Type(Opts.Text, Description.BootFrames);
+	/* a program opened as text is pasted; what --type gives is typed */
+	if(!Opts.Text.empty()) Typist.Type(Opts.Text, Description.BootFrames, IsTextFile(Opts.Tape) && Current.FastPaste);
 
 	Display Screen;
 	AudioOutput Sound;
@@ -1125,7 +1131,7 @@ int RunEmulator(HostedMachine &Machine, int argc, char *argv[])
 		if(Paste) NewText = ClipboardText();
 		if(!NewText.empty())
 		{
-			Typist.Type(NewText);
+			Typist.Type(NewText, 0, Current.FastPaste);
 			Pasting = true;
 		}
 		if(!Typist.Busy()) Pasting = false;

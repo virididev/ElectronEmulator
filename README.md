@@ -119,7 +119,11 @@ long as the bits in it can be told apart, also if the recorder ran somewhat fast
 or slow.
 
 F9 makes the emulator type the text that is on the clipboard, at full speed, which
-is handy for a BASIC listing. Escape stops it. Lower case letters arrive as
+is handy for a BASIC listing. Escape stops it. With the setting "Fast pasting",
+which is on to begin with, the text is not typed key by key but put straight in
+the Electron's keyboard buffer, as fast as BASIC takes it in: a long listing is
+in within seconds, and lower case letters stay lower case. With it off, each key
+is pressed in turn, which takes a while, and lower case letters arrive as
 capitals.
 
 ## Sideways RAM
@@ -152,7 +156,8 @@ extension `.bas`: what `LIST` would show, a line of text to a line of program.
 
 Such a file, or any `.txt`, can be opened like a tape image: with F1, by dropping
 it on the window, or by naming it on the command line. The emulator types it in,
-at full speed, as it does the text on the clipboard; Escape stops it. What was in
+at full speed and as the setting "Fast pasting" says, as it does the text on the
+clipboard; Escape stops it. What was in
 memory stays there unless the text starts with `NEW`.
 
 ## Status bar
@@ -316,6 +321,7 @@ choose a setting, left and right (or Return) change it, Escape closes the screen
 | Setting                 | Meaning                                         |
 |-------------------------|-------------------------------------------------|
 | Fast tape loading       | run at full speed while a tape is running       |
+| Fast pasting            | pasted text straight into the keyboard buffer   |
 | Load tapes at once      | load and run a tape as soon as it is inserted   |
 | Full screen             | full screen                                     |
 | Status bar              | a line of information below the picture         |
@@ -334,7 +340,7 @@ switched on by itself; all are off to begin with.
 
 The settings are kept in `settings.cfg` in the folder for application settings
 (on a Mac `~/Library/Application Support/Emulators/acornelectron/`). The
-options `--no-fasttape`, `--no-autoload`, `--fullscreen`, `--volume`, `--scale`
+options `--no-fasttape`, `--no-fastpaste`, `--no-autoload`, `--fullscreen`, `--volume`, `--scale`
 and `--sideways-ram` overrule them for that one session, without changing what is kept. F11 likewise
 switches full screen for the moment only.
 

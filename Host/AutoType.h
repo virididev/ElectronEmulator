@@ -13,8 +13,10 @@ class AutoType
 		explicit AutoType(HostedMachine &);
 
 		/* queues text; a newline is the RETURN key. Typing starts after the given
-		number of frames */
-		void Type(const std::string &Text, int DelayFrames = 0);
+		number of frames. Fast puts the text straight in the machine's keyboard
+		buffer when it can, rather than pressing its keys; it holds for all that
+		is queued until the typing is done */
+		void Type(const std::string &Text, int DelayFrames = 0, bool Fast = false);
 
 		bool Busy() const { return !Text.empty() || Stage != NOTHING; }
 
@@ -28,6 +30,7 @@ class AutoType
 		HostedMachine &Machine;
 		std::string Text;
 		int Countdown;
+		bool Fast;
 
 		/* the character being typed, and how far that has come: its modifiers
 		down, then its key, then its key up again, its modifiers still down */

@@ -108,8 +108,9 @@ process send keystrokes without permission.
 - No expansions are emulated, so there are no discs; only sideways RAM and ROMs
   in the free slots.
 
-- Lower case letters in pasted text arrive as capitals, because typing assumes
-  the machine is as it starts up, with caps lock on.
+- With "Fast pasting" off, lower case letters in pasted text arrive as
+  capitals, because typing assumes the machine is as it starts up, with caps
+  lock on.
 - The macOS application is signed for the Mac they were built on and use the
   SDL3 that is installed there.
 

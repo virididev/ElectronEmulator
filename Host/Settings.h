@@ -10,6 +10,10 @@ struct Settings
 	/* run at full speed while a tape is loading */
 	bool FastTape;
 
+	/* put pasted text and programs opened as text straight in the machine's
+	keyboard buffer, rather than typing them key by key */
+	bool FastPaste;
+
 	/* load and run a tape as soon as it is inserted */
 	bool AutoLoad;
 

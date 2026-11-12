@@ -111,6 +111,14 @@ class HostedMachine
 		them at another moment than the key could otherwise miss them */
 		virtual bool TypeCharacter(char Character, bool Down, bool Modifiers) = 0;
 
+		/* Puts text straight in the buffer the machine's operating system keeps
+		the keys that were typed in, as far as there is room, a newline being
+		RETURN, so that it arrives as if typed but without the time each key takes.
+		Returns how many characters were taken, characters it has no use for among
+		them; -1 if the machine cannot do this now, in which case the text has to
+		be typed key by key */
+		virtual int BufferText(const std::string &) { return -1; }
+
 		/* the cassette recorder, or whatever else the machine takes its software
 		from: a machine that has more than tapes tells by the file what it is */
 		virtual bool InsertTape(const char *Name) = 0;

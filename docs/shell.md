@@ -58,7 +58,7 @@ A few of these deserve a word:
 
 `ParseOptions` in `Shell.cpp`. The shell's own options are `--roms`, `--saves`,
 `--scale`, `--fullscreen`, `--volume`, `--type`, `--no-autoload`,
-`--no-fasttape`, `--frames`, `--screenshot`, `--headless` and `--monitor`;
+`--no-fasttape`, `--no-fastpaste`, `--frames`, `--screenshot`, `--headless` and `--monitor`;
 anything else is
 offered to the machine. An argument that is not an option is the file to open.
 
@@ -197,6 +197,20 @@ the scan of the keyboard, after the ROM had looked at SHIFT and before it looked
 at the key, and it would see the key without it. Characters the
 machine has no key for are skipped. It is used for `--type`, for the load
 command, for pasting from the clipboard and for programs opened as text.
+
+**Fast pasting.** Pressing keys takes some nine frames a character and thirty
+after RETURN, which for a long listing is minutes even at full speed. So text
+from the clipboard and programs opened as text, when the setting `FastPaste` is
+on, are not typed but handed to `HostedMachine::BufferText`, which puts as much
+as there is room for straight in the buffer in which the machine's operating
+system keeps the keys typed, every frame, until all is in. The machine's own
+software reads it from there as if it had been typed, so BASIC tokenises and
+stores the lines itself and the result is the same as typing, byte for byte.
+On the Electron the MOS keeps that buffer at `&3E0`-`&3FF`, with the offsets
+from `&300` of where to take out and put in at `&2CC` and `&2D5`; a machine
+that cannot do this, or whose buffer is not in order at that moment, returns -1
+and the text is typed after all. `--type`, the load command and the monitor's
+typing keep pressing keys, since tests depend on how that behaves.
 
 Line endings are normalised first, tabs become spaces, and a last line without
 an end gets one.

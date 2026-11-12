@@ -16,6 +16,7 @@ const struct
 } Entries[] =
 {
 	{ "FastTape",   &Settings::FastTape,   NULL },
+	{ "FastPaste",  &Settings::FastPaste,  NULL },
 	{ "AutoLoad",   &Settings::AutoLoad,   NULL },
 	{ "FullScreen", &Settings::FullScreen, NULL },
 	{ "StatusBar",  &Settings::StatusBar,  NULL },
@@ -33,7 +34,7 @@ const size_t NUM_ENTRIES = sizeof(Entries) / sizeof(*Entries);
 
 }
 
-Settings::Settings() : FastTape(true), AutoLoad(true), FullScreen(false), StatusBar(true), Scanlines(false), VerticalLines(false), Vignette(false), Smooth(false), Resume(false), Volume(100), SidewaysRAM(0), Scale(0)
+Settings::Settings() : FastTape(true), FastPaste(true), AutoLoad(true), FullScreen(false), StatusBar(true), Scanlines(false), VerticalLines(false), Vignette(false), Smooth(false), Resume(false), Volume(100), SidewaysRAM(0), Scale(0)
 {
 }
 

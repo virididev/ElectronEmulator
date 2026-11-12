@@ -27,6 +27,10 @@ last at least this many frames */
 /* to be raised whenever what a snapshot holds changes */
 const int SNAPSHOT_VERSION = 4;
 
+/* where the MOS keeps the state of its keyboard buffer: see BufferText */
+const size_t KEYBOARD_BUFFER_START = 0x2cc, KEYBOARD_BUFFER_END = 0x2d5;
+const uint8_t KEYBOARD_BUFFER_FIRST = 0xe0;
+
 /* The slots the setting for sideways RAM fills, in this order: those that boards
 for the Electron with sockets for sideways RAM usually have, and then the rest */
 const int SIDEWAYS_RAM_SLOTS[] = { 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15 };
@@ -179,6 +183,34 @@ class HostedElectron : public HostedMachine
 				if(Control) Electron.SetKey(Keyboard::KEY_CTRL, Down);
 			}
 			return true;
+		}
+
+		/* The MOS keeps the keyboard buffer at 0x3e0 to 0x3ff. For each of its
+		buffers it has the offset from 0x300 of the next character to take out and
+		of where the next one goes in; the buffer is empty when they are equal and
+		full when the second would catch up with the first. After 0xff comes 0xe0 */
+		int BufferText(const std::string &Text)
+		{
+			uint8_t &Start = Electron.RAM[KEYBOARD_BUFFER_START];
+			uint8_t &End = Electron.RAM[KEYBOARD_BUFFER_END];
+
+			/* something other than the MOS that is using that memory */
+			if(Start < KEYBOARD_BUFFER_FIRST || End < KEYBOARD_BUFFER_FIRST) return -1;
+
+			size_t Taken = 0;
+			for(; Taken < Text.size(); Taken++)
+			{
+				const uint8_t Next = End == 0xff ? KEYBOARD_BUFFER_FIRST : (uint8_t)(End + 1);
+				if(Next == Start) break;
+
+				/* only what can be typed on the keyboard */
+				const char Character = Text[Taken];
+				if(Character != '\n' && (Character < ' ' || Character > '~')) continue;
+
+				Electron.RAM[0x300 + End] = Character == '\n' ? 0x0d : (uint8_t)Character;
+				End = Next;
+			}
+			return (int)Taken;
 		}
 
 		bool InsertTape(const char *Name) { return Electron.Cassette.Open(Name); }

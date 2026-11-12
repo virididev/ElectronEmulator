@@ -12,13 +12,17 @@ want to see a key several times in a row before they believe it */
 look at the keyboard while it is busy */
 #define FRAMES_AFTER_RETURN	30
 
-AutoType::AutoType(HostedMachine &M) : Machine(M), Countdown(0), Held(0), Stage(NOTHING)
+AutoType::AutoType(HostedMachine &M) : Machine(M), Countdown(0), Fast(false), Held(0), Stage(NOTHING)
 {
 }
 
-void AutoType::Type(const std::string &NewText, int DelayFrames)
+void AutoType::Type(const std::string &NewText, int DelayFrames, bool NewFast)
 {
-	if(!Busy()) Countdown = DelayFrames;
+	if(!Busy())
+	{
+		Countdown = DelayFrames;
+		Fast = NewFast;
+	}
 	Text += NewText;
 }
 
@@ -56,6 +60,18 @@ void AutoType::Frame()
 		return;
 
 		default: break;
+	}
+
+	/* as much as there is room for in the buffer, every frame */
+	if(Fast)
+	{
+		const int Taken = Machine.BufferText(Text);
+		if(Taken >= 0)
+		{
+			Text.erase(0, (size_t)Taken);
+			Countdown = 1;
+			return;
+		}
 	}
 
 	/* characters the machine has no key for are skipped */
