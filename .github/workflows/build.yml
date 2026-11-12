@@ -1,5 +1,12 @@
 # Builds the emulator on Windows, Linux and macOS, and keeps what is built as a
 # download with the run (under "Artifacts" on the page of the run).
+#
+# A tag that starts with v (v1.0.0, v1.1.0 ...) makes a release as well, with the
+# three programs attached:
+#
+#   git tag v1.0.0
+#   git push origin v1.0.0
+#
 # The ROMs are not in the repository, so they are not in what is built either;
 # where the program looks for them is in the README, under "The ROMs".
 
@@ -24,8 +31,12 @@ jobs:
             name: macos
     runs-on: ${{ matrix.os }}
 
+    # the version in the names of the files: the tag, or else "dev"
+    env:
+      PACKAGE: acornelectron-${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}-${{ matrix.name }}
+
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Linux packages
         if: runner.os == 'Linux'
@@ -48,25 +59,75 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      # a tar keeps the program executable on Linux and macOS, which the zip
-      # of an artifact does not
+      # a zip for Windows; a tar for Linux and macOS, as it keeps the program
+      # executable, which a zip does not
       - name: Package
         shell: bash
         run: |
-          mkdir -p package/acornelectron/roms
+          mkdir -p package/acornelectron dist
+          cp README.md package/acornelectron/
           case "${{ matrix.name }}" in
             windows)
-              cp build/Release/acornelectron.exe build/Release/*.dll package/acornelectron/ 2>/dev/null || cp build/Release/acornelectron.exe package/acornelectron/
-              cp README.md package/acornelectron/ ;;
+              cp build/Release/acornelectron.exe package/acornelectron/
+              cp build/Release/*.dll package/acornelectron/ 2>/dev/null || true
+              (cd package && 7z a -tzip "../dist/$PACKAGE.zip" acornelectron) ;;
             linux)
-              cp build/acornelectron README.md package/acornelectron/ ;;
+              cp build/acornelectron package/acornelectron/
+              tar -C package -czf "dist/$PACKAGE.tar.gz" acornelectron ;;
             macos)
-              rm -r package/acornelectron/roms
-              cp -R "build/Acorn Electron.app" README.md package/acornelectron/ ;;
+              cp -R "build/Acorn Electron.app" package/acornelectron/
+              tar -C package -czf "dist/$PACKAGE.tar.gz" acornelectron ;;
           esac
-          tar -C package -czf acornelectron-${{ matrix.name }}.tar.gz acornelectron
 
       - uses: actions/upload-artifact@v7
         with:
-          name: acornelectron-${{ matrix.name }}
-          path: ${{ matrix.name == 'windows' && 'package/acornelectron' || format('acornelectron-{0}.tar.gz', matrix.name) }}
+          name: ${{ env.PACKAGE }}
+          path: dist/*
+
+  release:
+    needs: build
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cat > notes.md <<'EOF'
+          ## Downloads
+
+          | System | File |
+          |---|---|
+          | Windows (64-bit) | `acornelectron-*-windows.zip` |
+          | macOS (Apple Silicon) | `acornelectron-*-macos.tar.gz` |
+          | Linux (x86-64) | `acornelectron-*-linux.tar.gz` |
+
+          ## The ROMs
+
+          The ROMs of the Electron are not included. Put `os.rom` and `basic.rom`
+          (16 kB each) in a folder `roms` next to the program, or in:
+
+          - Windows: `%APPDATA%\Emulators\acornelectron\roms`
+          - macOS: `~/Library/Application Support/Emulators/acornelectron/roms`
+          - Linux: `~/.local/share/Emulators/acornelectron/roms`
+
+          If they are missing, the emulator says where to put them and makes the
+          last of these folders.
+
+          ## macOS
+
+          The application is not signed by a known developer, so macOS stops it the
+          first time. Right-click it and choose Open, or run
+          `xattr -dr com.apple.quarantine "Acorn Electron.app"`.
+          EOF
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" \
+            --title "Acorn Electron $TAG" --notes-file notes.md --generate-notes
