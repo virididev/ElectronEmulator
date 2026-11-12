@@ -16,8 +16,9 @@ every system the steps are the same, from this directory:
 `-DEMULATOR_DOWNLOAD_DEPENDENCIES=ON` on the first line makes it download them
 also when they are installed.
 
-The ROMs `roms/os.rom` and `roms/basic.rom` must be there before building; they
-are copied to sit next to the program.
+The ROMs are not part of the sources. If `roms/os.rom` and `roms/basic.rom`
+are there when building, they are copied to sit next to the program; if not, see
+[The ROMs](#the-roms).
 
 ### macOS
 
@@ -61,6 +62,25 @@ Applications; a tape can be opened with it or dropped on it. Started that way, i
 keeps what the machine saves in the Documents folder. The icon is drawn in
 `icon/icon.svg`; `Host/macos/make-icon.sh` makes the `.icns` of it again
 if the drawing changes, and `Host/windows/make-icon.sh` the `.ico` for Windows.
+
+## The ROMs
+
+The emulator needs the ROMs of the Electron, `os.rom` and `basic.rom`, 16 kB
+each. It looks for them in a folder `roms`, first next to the program (in the
+application on a Mac: `Acorn Electron.app/Contents/Resources/roms`), and then in
+the folder where it keeps its settings:
+
+| System  | Folder                                                      |
+|---------|-------------------------------------------------------------|
+| Windows | `%APPDATA%\Emulators\acornelectron\roms`                    |
+| macOS   | `~/Library/Application Support/Emulators/acornelectron/roms` |
+| Linux   | `~/.local/share/Emulators/acornelectron/roms`               |
+
+The second place is the one for a program that was downloaded: the ROMs stay
+there when a new version of the program takes the place of the old one. If the
+ROMs are in neither place, the emulator says so, with the folders, and makes the
+second folder, so that it is there to put them in. `--roms <directory>` names
+another folder instead.
 
 ## Use
 

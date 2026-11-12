@@ -46,7 +46,7 @@ void PrintUsage(const HostedMachine &Hosted)
 		"\n"
 		"%s"
 		"  --roms <directory>   where the ROMs are, instead of the folder 'roms'\n"
-		"                       next to the program\n"
+		"                       next to the program or next to the settings\n"
 		"  --saves <directory>  where to put what the machine saves to tape, instead\n"
 		"                       of the current directory\n"
 		"  --scale <n>          initial size of the window, default %d\n"
@@ -534,7 +534,6 @@ int RunEmulator(HostedMachine &Machine, int argc, char *argv[])
 	}
 
 	const char *const Base = SDL_GetBasePath();
-	if(Opts.ROMs.empty()) Opts.ROMs = std::string(Base ? Base : "") + "roms";
 
 	/* An application on a Mac is not started from a directory of the user's
 	choice, so what it saves goes with the user's documents */
@@ -572,10 +571,31 @@ int RunEmulator(HostedMachine &Machine, int argc, char *argv[])
 	if(Opts.FullScreen >= 0) Current.FullScreen = Opts.FullScreen != 0;
 	if(Opts.SidewaysRAM >= 0) Current.SidewaysRAM = Opts.SidewaysRAM;
 
-	std::string Problem;
-	if(!Machine.LoadROMs(Opts.ROMs, Problem))
+	/* Where the ROMs are looked for: where the command line says, or else in the
+	folder 'roms' next to the program (in a Mac application, among its
+	resources), and then in the folder 'roms' next to the settings, which stays
+	when a new version of the program takes the place of the old one */
+	std::vector<std::string> ROMFolders;
+	const std::string UserROMs = SettingsFolder.empty() ? "" : SettingsFolder + "roms";
+	if(!Opts.ROMs.empty())
+		ROMFolders.push_back(Opts.ROMs);
+	else
 	{
+		ROMFolders.push_back(std::string(Base ? Base : "") + "roms");
+		if(!UserROMs.empty()) ROMFolders.push_back(UserROMs);
+	}
+
+	std::string Problem;
+	if(!Machine.LoadROMs(ROMFolders, Problem))
+	{
+		/* the folder next to the settings is made, so that it is there to be
+		found and the ROMs can be put in it */
+		if(Opts.ROMs.empty() && !UserROMs.empty()) SDL_CreateDirectory(UserROMs.c_str());
+
 		fprintf(stderr, "%s\n", Problem.c_str());
+		if(!Opts.Headless)
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, Description.Name, Problem.c_str(), NULL);
+		SDL_Quit();
 		return 1;
 	}
 	if(Machine.SetSidewaysRAM(Current.SidewaysRAM) < Current.SidewaysRAM)

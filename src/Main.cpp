@@ -85,12 +85,22 @@ class HostedElectron : public HostedMachine
 				"  --ram <slot>         put 16 kB of RAM in such a slot (sideways RAM)\n";
 		}
 
-		bool LoadROMs(const std::string &Directory, std::string &Problem)
+		bool LoadROMs(const std::vector<std::string> &Directories, std::string &Problem)
 		{
-			const std::string OSName = Directory + "/" OS_ROM_NAME, BASICName = Directory + "/" BASIC_ROM_NAME;
-			if(!Electron.LoadROMs(OSName.c_str(), BASICName.c_str()))
+			bool Loaded = false;
+			for(size_t c = 0; c < Directories.size() && !Loaded; c++)
 			{
-				Problem = OSName + " and " + BASICName + ": not found, or not 16 kB ROMs";
+				const std::string OSName = Directories[c] + "/" OS_ROM_NAME, BASICName = Directories[c] + "/" BASIC_ROM_NAME;
+				Loaded = Electron.LoadROMs(OSName.c_str(), BASICName.c_str());
+			}
+			if(!Loaded)
+			{
+				Problem = "The ROMs " OS_ROM_NAME " and " BASIC_ROM_NAME " (16 kB each) were not found. Put them in ";
+				for(size_t c = 0; c < Directories.size(); c++)
+				{
+					if(c) Problem += c + 1 == Directories.size() ? " or in " : ", in ";
+					Problem += Directories[c];
+				}
 				return false;
 			}
 

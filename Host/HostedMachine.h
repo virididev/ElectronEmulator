@@ -52,8 +52,9 @@ class HostedMachine
 
 		virtual const Description &Describe() const = 0;
 
-		/* loads the ROMs from a directory; on failure, Problem says what is wrong */
-		virtual bool LoadROMs(const std::string &Directory, std::string &Problem) = 0;
+		/* loads the ROMs from the first of these directories that has them; on
+		failure, Problem says what is wrong */
+		virtual bool LoadROMs(const std::vector<std::string> &Directories, std::string &Problem) = 0;
 
 		/* power off and on, and the machine's reset button or key */
 		virtual void PowerOn() = 0;

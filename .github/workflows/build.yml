@@ -1,8 +1,7 @@
 # Builds the emulator on Windows, Linux and macOS, and keeps what is built as a
 # download with the run (under "Artifacts" on the page of the run).
-# The ROMs are not in the repository, so they are not in what is built either:
-# put os.rom and basic.rom in the folder 'roms' next to the program (on a Mac in
-# Acorn Electron.app/Contents/Resources/roms).
+# The ROMs are not in the repository, so they are not in what is built either;
+# where the program looks for them is in the README, under "The ROMs".
 
 name: build
 
