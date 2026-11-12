@@ -11,16 +11,18 @@ the folder that holds this skill).
 Before this: the whole test suite passes (`electron-test`).
 
 The Electron itself writes the tape: what `SAVE`/`*SAVE` sends to the cassette
-becomes `NAME.uef` in `--saves <dir>` (default: the current directory). An
-existing file is never overwritten — a new one gets `NAME 2.uef` — so save into
-an empty output directory.
+becomes `NAME.uef` in the `--saves` directory. Run `EMU` from the project root
+with `--saves dist`; file names inside the scripts stay relative to the project
+root (`build-electron/prog.bin`). An existing file is never overwritten — a
+new one gets `NAME 2.uef` — so empty `dist` first. Check the output for `?`
+lines: a failed `l` means the wrong memory goes on tape.
 
 ## Machine code
 
 ```
-# make-tape.mon   (run with: EMU run --saves dist --monitor make-tape.mon)
+# release/make-tape.mon   (EMU run --saves dist --monitor release/make-tape.mon)
 f 100
-l 0E00 ../build-electron/prog.bin
+l 0E00 build-electron/prog.bin
 t *SAVE GAME E00 F80 E00\n
 f 20
 t \n            # answer "RECORD then RETURN"
@@ -32,7 +34,7 @@ is the execution address. Check `dist/GAME.uef` exists; if not, give more frames
 ## BASIC
 
 ```
-# make-tape.mon   (EMU run --saves dist --monitor make-tape.mon ../src/game.bas)
+# release/make-tape.mon   (EMU run --saves dist --monitor release/make-tape.mon src/game.bas)
 f 100
 t SAVE "GAME"\n
 f 20
@@ -55,7 +57,7 @@ t SAVE "LOADER"\n
 f 20
 t \n
 f 800
-l 0E00 ../build-electron/prog.bin
+l 0E00 build-electron/prog.bin
 t *SAVE GAMECODE E00 F80 E00\n
 f 20
 t \n
@@ -65,15 +67,19 @@ f 1500
 EMU uefcat dist/GAME.uef dist/LOADER.uef dist/GAMECODE.uef
 ```
 The tape then `CHAIN`s the loader, which `*RUN`s the code from the same tape
-(verified). Prefer a single machine code file unless a loader is needed.
+(verified). The loader itself sits at PAGE (`&0E00`): code loaded there
+overwrites the running loader, which only works if the code never returns to
+BASIC. Otherwise assemble the code higher (e.g. `--start-addr 0x2000`) and
+adjust the addresses above. Prefer a single machine code file unless a loader
+is needed — a tape with only machine code is started with `*RUN` by itself.
 
 ## Verify from a cold start — always
 
 ```
-# verify.mon   (EMU run --png dist/verify.png --monitor verify.mon dist/GAME.uef)
+# release/verify.mon   (EMU run --saves dist --png dist/verify.png --monitor release/verify.mon dist/GAME.uef)
 b 0E00          # entry point
 g               # fails with ? if the tape never starts the program
-c 0E00 ../build-electron/prog.bin   # the code arrived intact
+c 0E00 build-electron/prog.bin   # the code arrived intact
 f 100
 ```
 Look at `verify.png`. For BASIC, `f 1000` after loading and check the screen.

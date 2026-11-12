@@ -16,6 +16,9 @@ Works on macOS, Linux and Windows with nothing but the Python standard library.
     python emu.py run [--png FILE] [--cwd DIR] [emulator options ...]
         run the emulator headless; --png saves the last picture as a PNG
         (the emulator itself writes BMP). Exit status is the emulator's.
+        File names inside a monitor script are relative to the directory this
+        is run from. Tapes the machine saves go to --saves, which is set to
+        that same directory unless given (never the Documents folder).
 
     python emu.py test [--png-dir DIR] [FILE.mon | DIR] ...
         run every monitor script (*.mon) headless, each in its own directory,
@@ -270,6 +273,24 @@ def run(args):
 
 
 def run_emulator(options, png=None, cwd=None, capture=False):
+    # Always say where files go: relative names in monitor scripts and what the
+    # machine saves to tape are taken relative to --saves, and without it the
+    # Mac application would use the Documents folder.
+    # Paths on the command line are made absolute, so that they mean the same
+    # whatever the emulator does with them.
+    base = os.path.abspath(cwd or os.getcwd())
+    absolute = []
+    takes_path = {"--saves", "--roms", "--monitor", "--screenshot"}
+    for i, a in enumerate(options):
+        before = options[i - 1] if i else ""
+        if before in takes_path and a != "-":
+            a = os.path.join(base, a)
+        elif not a.startswith("-") and before != "--type" and os.path.exists(os.path.join(base, a)):
+            a = os.path.join(base, a)  # a tape, snapshot, program or ROM file
+        absolute.append(a)
+    options = absolute
+    if "--saves" not in options:
+        options = ["--saves", base] + options
     cmd = [need_emulator(), "--headless"] + options
     bmp = None
     if png:

@@ -14,9 +14,9 @@ optimisation techniques themselves.
 ## Where does the time go?
 
 ```
-# profile.mon
+# profile.mon   (EMU run --monitor profile.mon, from the project root)
 f 100
-l 0E00 ../build-electron/prog.bin
+l 0E00 build-electron/prog.bin
 t CALL &E00\n
 f 20           # let it settle into its main loop
 pf             # start (or restart) the profile

@@ -151,6 +151,9 @@ with status 1 — so a script is a test.
 - **Running machine code:** prefer `t CALL &E00\n` from BASIC, so `RTS` returns
   to BASIC. After `pc 0E00` + `g` an `RTS` returns into garbage: set a breakpoint
   on the last instruction instead.
+- **A breakpoint also stops `t` and `f`.** With `b X` set, `t CALL &E00\n`
+  already stops at X; a `g` straight after it waits for the *next* hit and
+  fails after 3000 frames. Look at the output to see where it stopped.
 - **Printing with `OSWRCH` and only CR (13)** returns to column 0 and BASIC's
   next prompt overwrites the line; use `OSASCI` or `OSNEWL`.
 - **Tape takes machine time.** Loading a small tape ~250 frames; `SAVE` needs
@@ -158,8 +161,16 @@ with status 1 — so a script is a test.
   `.uef` appears. Wait with `b <entry>` + `g` rather than guessing `f n`.
 - **BASIC inline assembler needs two passes** (`FOR pass%=0 TO 2 STEP 2`), else
   forward branches assemble wrongly — a hang is not always the emulator's fault.
-- **Relative file names** in `l`, `sv`, `c`, `tr` are relative to `--saves` or
-  the current directory; `EMU test` runs each script in its own directory.
+- **Where files go** (verified, and not quite what the emulator's README says):
+  - file names in a script's `l`, `sv`, `c`, `tr` are relative to the
+    directory the emulator runs in: where you run `EMU run` from (run it from
+    the project root), or the script's own directory for `EMU test`;
+  - tapes written by `SAVE`/`*SAVE` go to `--saves`. `EMU` passes the same
+    directory unless you give `--saves` yourself — never run the emulator
+    without it: the Mac application then saves into `~/Documents`.
+- **Read the output for `?` lines.** A failed `l` (wrong path) does not stop
+  the script: everything after it works on whatever was in memory — a
+  `*SAVE` then puts the wrong bytes on tape.
 - Breakpoints set by a script are not kept; the snapshot and settings of the
   interactive emulator are not touched by headless script runs except as noted
   in the README.
