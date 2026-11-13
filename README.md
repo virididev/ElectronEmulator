@@ -424,3 +424,8 @@ from it.
 
 The ROMs of the Electron are Acorn's. The acorn in the icon is the one from
 Acorn's logo.
+
+## License
+
+The code in this repository is released under the MIT License; see
+[LICENSE](LICENSE). This does not cover the ROMs mentioned above.
